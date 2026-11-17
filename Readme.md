@@ -36,6 +36,7 @@ GET	/tasks/{task_id}	Get task by ID
 PUT	/tasks/{task_id}	Update task
 PATCH	/tasks/{task_id}/complete	Complete task
 DELETE	/tasks/{task_id}	Delete task
+
 Learning Objectives
 Understand Client–Server Architecture
 Learn HTTP Methods and Status Codes
