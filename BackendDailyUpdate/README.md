@@ -108,4 +108,4 @@ Open Swagger UI: http://127.0.0.1:8000/docs
 
 ## Project Status
 
-Core authentication, database operations, CRUD functionality, query optimization, pagination, filtering, and Redis caching have been implemented,.
+Core authentication, database operations, CRUD functionality, query optimization, pagination, filtering,Password hashing and authentication security and Redis caching have been implemented,.
