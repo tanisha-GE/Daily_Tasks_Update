@@ -8,4 +8,4 @@ class Task(Base):
     title=Column(String, nullable=False)
     description = Column(String, nullable=True)
     completed = Column(Boolean, default=False)
-    user = Column(String, nullable=False)
+    user = Column(String, nullable=False,index=True)

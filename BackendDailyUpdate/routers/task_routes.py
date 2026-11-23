@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -7,6 +7,9 @@ from typing import Optional
 from dependencies.auth_dependencies import get_current_user
 from database import get_db
 from models.task import Task as TaskModel
+
+import json
+from redis_client import redis_client
 
 router = APIRouter(
     prefix="/tasks",
@@ -26,16 +29,32 @@ class TaskUpdate(BaseModel):
 
 @router.get("/")
 def get_all_tasks(
-    db: Session=Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    completed: Optional[bool] = None,
+    db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    tasks=db.query(TaskModel).filter(
-        TaskModel.user== current_user
-    ).all()
+    query = db.query(TaskModel).filter(
+        TaskModel.user == current_user
+    )
+
+    # Filtering
+    if completed is not None:
+        query = query.filter(
+            TaskModel.completed == completed
+        )
+
+    # Pagination
+    tasks = query.offset(skip).limit(limit).all()
+
     return {
-        "total_tasks": len(tasks),
+        "total_tasks": query.count(),
+        "skip": skip,
+        "limit": limit,
         "tasks": tasks
     }
+
 
 
 @router.post("/", status_code=201)
@@ -105,3 +124,30 @@ def update_task(
             "user": existing_task.user
         }
     }
+
+@router.delete("/{task_id}")
+def delete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    # Find task belonging to the logged-in user
+    existing_task = db.query(TaskModel).filter(
+        TaskModel.id == task_id,
+        TaskModel.user == current_user
+    ).first()
+
+    if not existing_task:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    # Delete task from database
+    db.delete(existing_task)
+    db.commit()
+
+    return {
+        "message": "Task deleted successfully"
+    }
+
