@@ -10,7 +10,9 @@ from models.task import Task as TaskModel
 
 import json
 from redis_client import redis_client, clear_task_cache
-
+#Send email and background task import
+from fastapi import BackgroundTasks
+from services.email_service import send_task_email
 
 router = APIRouter(
     prefix="/tasks",
@@ -92,13 +94,43 @@ def get_all_tasks(
     return result
 
 
-
 @router.post("/", status_code=201)
 def create_task(
     task: TaskCreate,
-    db:Session=Depends(get_db),
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
+
+    new_task = TaskModel(
+        title=task.title,
+        description=task.description,
+        completed=task.completed,
+        user=current_user
+    )
+
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+
+    clear_task_cache(current_user)
+
+    # Send email in background
+    background_tasks.add_task(
+        send_task_email,
+        new_task.title
+    )
+
+    return {
+        "message": "Task created successfully",
+        "task": {
+            "id": new_task.id,
+            "title": new_task.title,
+            "description": new_task.description,
+            "completed": new_task.completed,
+            "user": new_task.user
+        }
+    }
    
     new_task = TaskModel(
         title=task.title,

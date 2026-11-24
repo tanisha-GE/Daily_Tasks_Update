@@ -106,6 +106,6 @@ Open Swagger UI: http://127.0.0.1:8000/docs
 
 - Background jobs using FastAPI BackgroundTasks
 
-## Project Status
+## Project StatusBackground jobs and async tasks
 
 Core authentication, database operations, CRUD functionality, query optimization, pagination, filtering,Password hashing and authentication security and Redis caching have been implemented,.
